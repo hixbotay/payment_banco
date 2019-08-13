@@ -1,7 +1,7 @@
 <?php
 
 class RemoteSoapClient extends SoapClient {
-	function __construct($wsdl,$options) {
+	function __construct($wsdl,$options=array()) {
 		return parent::__construct($wsdl, $options);
 		//$this->server = new SoapServer($wsdl, $options);
 	}
@@ -9,10 +9,10 @@ class RemoteSoapClient extends SoapClient {
 		$result = parent::__doRequest($request, $location, $action, $version, $one_way);
 		return $result;
 	}
-	function execute($location, $request) {
+	function execute($location, $request,$action='') {
 		
 		return $this->__doRequest($request, $location, $action, '1');
-		
+		/*
 		$soapEnvelope = new SimpleXMLElement($result);
 		$name_spaces = $soapEnvelope->getNamespaces(true);
 		$namespace = isset($name_spaces['soap-env']) ? $name_spaces['soap-env'] : $name_spaces['SOAP-ENV'];
@@ -31,5 +31,6 @@ class RemoteSoapClient extends SoapClient {
 		$soapEnvelope = null;
 		unset($soapEnvelope);
 		return $result;
+		*/
 	}
 }

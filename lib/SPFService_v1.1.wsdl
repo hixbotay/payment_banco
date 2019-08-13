@@ -55,7 +55,7 @@
   </wsdl:binding>
   <wsdl:service name="SPFServiceService">
     <wsdl:port binding="tns:SPFServiceSoap11" name="SPFServiceSoap11">
-      <soap:address location="http://localhost:7080/besa-pe-services-external-webapp/ws/SPFService"/>
+      <soap:address location="http://localhost/fly/plugins/bookpro/payment_banco/test_importPayment.php"/>
     </wsdl:port>
   </wsdl:service>
 </wsdl:definitions>
