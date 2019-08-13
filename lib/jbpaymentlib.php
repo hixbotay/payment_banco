@@ -167,5 +167,11 @@ Class JbPaymentbancoLib{
 		$a['ZWD'] = array('Zimbabwe Dollar', '716');
 		return $a[$code][1];
 	}
+	
+	static function debug($value){
+		echo '<pre>';
+		print_r($value);
+		echo '</pre>';
+	}
 }
 ?>

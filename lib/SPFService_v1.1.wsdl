@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:sch="http://bancoeconomico.ao/economiconet/spfService" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="http://bancoeconomico.ao/economiconet/spfService" targetNamespace="http://bancoeconomico.ao/economiconet/spfService">
+  <wsdl:types>
+    <schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:msg="http://bancoeconomico.ao/economiconet/message" attributeFormDefault="unqualified" elementFormDefault="unqualified" targetNamespace="http://bancoeconomico.ao/economiconet/spfService"><element name="importPaymentRequest"><complexType><sequence><element name="authToken" type="string"/><element name="entityId" type="string"><annotation><documentation>Identificador da entidade</documentation></annotation></element><element name="productNumber" type="int"><annotation><documentation>Código do produto</documentation></annotation></element><element name="sourceId" type="string"><annotation><documentation>Identificador na origem</documentation></annotation></element><element minOccurs="0" name="reference" type="string"><annotation><documentation>Referência para Multicaixa / EMIS</documentation></annotation></element><element minOccurs="0" name="amount" type="decimal"><annotation><documentation>Montante</documentation></annotation></element><element minOccurs="0" name="startDate" type="date"><annotation><documentation>Data de início (apenas usado em produtos de tipo factura)</documentation></annotation></element><element minOccurs="0" name="endDate" type="date"><annotation><documentation>Data de fim</documentation></annotation></element><element minOccurs="0" name="taxRate" type="decimal"><annotation><documentation>Taxa Imposto</documentation></annotation></element><element minOccurs="0" name="clientName" type="string"><annotation><documentation>Nome do cliente</documentation></annotation></element><element minOccurs="0" name="clientAddress" type="string"><annotation><documentation>Morada do cliente</documentation></annotation></element><element minOccurs="0" name="clientVatNumber" type="string"><annotation><documentation>Contribuinte do cliente</documentation></annotation></element><element minOccurs="0" name="clientEmail" type="string"><annotation><documentation>Email do cliente</documentation></annotation></element><element minOccurs="0" name="clientPhoneNumber" type="string"><annotation><documentation>Telefone do cliente</documentation></annotation></element></sequence></complexType></element><element name="importPaymentResponse"><complexType><sequence><element name="resultCode" type="string"/><element minOccurs="0" name="reason" type="string"/><element minOccurs="0" name="payment" type="tns:Payment"><annotation><documentation>Informação do pagamento</documentation></annotation></element></sequence></complexType></element><element name="getPaymentRequest"><complexType><sequence><element name="authToken" type="string"/><element name="entityId" type="string"><annotation><documentation>Identificador da entidade</documentation></annotation></element><element maxOccurs="unbounded" minOccurs="0" name="paymentIds" type="string"><annotation><documentation>Identificador(es) de pagamento</documentation></annotation></element><element maxOccurs="unbounded" minOccurs="0" name="sourceIds" type="string"><annotation><documentation>Identificador(es) na origem</documentation></annotation></element></sequence></complexType></element><element name="getPaymentResponse"><complexType><sequence><element name="resultCode" type="string"/><element minOccurs="0" name="reason" type="string"/><element maxOccurs="unbounded" minOccurs="0" name="payments" type="tns:Payment"><annotation><documentation>Informação de pagamentos</documentation></annotation></element></sequence></complexType></element><complexType name="Payment"><annotation><documentation>Informação de pagamento</documentation></annotation><sequence><element name="paymentId" type="string"><annotation><documentation>Identificador do pagamento criado</documentation></annotation></element><element name="sourceId" type="string"><annotation><documentation>Identificador na origem</documentation></annotation></element><element name="entityId" type="string"><annotation><documentation>Identificador da entidade</documentation></annotation></element><element minOccurs="0" name="reference" type="string"><annotation><documentation>Referência para Multicaixa / EMIS</documentation></annotation></element><element minOccurs="0" name="amount" type="decimal"><annotation><documentation>Montante</documentation></annotation></element><element minOccurs="0" name="startDate" type="date"><annotation><documentation>Data de início</documentation></annotation></element><element minOccurs="0" name="endDate" type="date"><annotation><documentation>Data de fim</documentation></annotation></element><element name="status" type="tns:PaymentStatus"/></sequence></complexType><simpleType name="PaymentStatus"><restriction base="string"><enumeration value="ACTIVE"/><enumeration value="INACTIVE"/><enumeration value="CANCELED"/><enumeration value="PAID"/><enumeration value="ERROR"/></restriction></simpleType></schema>
+  </wsdl:types>
+  <wsdl:message name="getPaymentRequest">
+    <wsdl:part element="tns:getPaymentRequest" name="getPaymentRequest">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getPaymentResponse">
+    <wsdl:part element="tns:getPaymentResponse" name="getPaymentResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="importPaymentResponse">
+    <wsdl:part element="tns:importPaymentResponse" name="importPaymentResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="importPaymentRequest">
+    <wsdl:part element="tns:importPaymentRequest" name="importPaymentRequest">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="SPFService">
+    <wsdl:operation name="getPayment">
+      <wsdl:input message="tns:getPaymentRequest" name="getPaymentRequest">
+    </wsdl:input>
+      <wsdl:output message="tns:getPaymentResponse" name="getPaymentResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="importPayment">
+      <wsdl:input message="tns:importPaymentRequest" name="importPaymentRequest">
+    </wsdl:input>
+      <wsdl:output message="tns:importPaymentResponse" name="importPaymentResponse">
+    </wsdl:output>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="SPFServiceSoap11" type="tns:SPFService">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="getPayment">
+      <soap:operation soapAction=""/>
+      <wsdl:input name="getPaymentRequest">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getPaymentResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="importPayment">
+      <soap:operation soapAction=""/>
+      <wsdl:input name="importPaymentRequest">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="importPaymentResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="SPFServiceService">
+    <wsdl:port binding="tns:SPFServiceSoap11" name="SPFServiceSoap11">
+      <soap:address location="http://localhost:7080/besa-pe-services-external-webapp/ws/SPFService"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

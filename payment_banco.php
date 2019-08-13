@@ -9,7 +9,7 @@
  */
 defined ( '_JEXEC' ) or die ( 'Restricted access' );
 require_once (JPATH_ADMINISTRATOR . '/components/com_bookpro/helpers/payment.php');
-
+define('BANCO_PATH',JPATH_ROOT.'/plugins/bookpro/payment_banco');
 
 
 // require_once (JPATH_ADMINISTRATOR . '/components/com_bookpro/helpers/log.php');
