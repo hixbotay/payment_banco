@@ -25,17 +25,17 @@
 				<field name="display_name" type="text" size="30" default="Payment banco"
 					label="Display Name" description="Name appears at payment page of frontend" />
 					
-				<field name="merchantId" type="text" default=""
-					label="Merchant Id" />
-				<field name="hashmac" type="text" default=""
-					label="Hashmac key" />
+				<field name="authToken" type="text" default="" label="AuthToken" />
+				<field name="entityId" type="text" default="" label="Entity Id" />
+				<field name="sourceId" type="text" default="" label="Source Id" />
 					
-				
+				<!--
 				<field name="test_mode" type="radio" default="0" label="Test mode"
 					class="btn-group">
 					<option value="0">No</option>
 					<option value="1">Yes</option>
 				</field>
+				-->
 				
 				<field name="sandbox_merchantId" type="text" default=""
 					label="Sandbox Merchant Id" />

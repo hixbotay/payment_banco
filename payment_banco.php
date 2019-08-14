@@ -55,20 +55,53 @@ class plgBookproPayment_banco extends BookproPaymentPlugin {
 		$cancel_url = JString::ltrim($host.'index.php?option=com_bookpro&controller=payment&task=postpayment&paction=cancel&method=' . $this->_element.'&order_id='.$data['id']);
 		$config = $this->getConfig();
 		
+		
 		$params = array(
-			'merchantId'	=> $config->merchantId,
-			'amount' 		=> $this->formatNumber($data['total']),
-			'currency'		=> $config->currency,
-			'itemId'		=> $data['order_number'],
-			'returnUrl'		=> $pingback_url,
-			'successURL'	=> $notify_url,
-			'environment'	=> $config->testmode			
-		);
-		$stringData = $params['banco_merchantId'].$params['banco_amount'].$params['banco_currency'].$params['banco_itemId'].$params['banco_itemName'].$params['banco_transactionReference'];
-		$params['banco_hash'] =  hash_hmac('sha1', $stringData,$config->hashmac);
+			'authToken' => $config->authToken,
+			'entityId' => $config->entityId,
+			'productNumber' => $data['order_number'],
+			'sourceId' => $config->sourceId,
+			'amount' => $this->formatNumber($data['total'])
+			);
+		$result = $this->getSoapResult('importPayment',$params);
+		if(!$result){
+			
+		}
 		
 		JbPaymentbancoLib::write_log('banco.txt', 'Checkout: '.json_encode($params));
 		JbPaymentbancoLib::submitForm($params,$this->getPaymentUrl($config->test_mode));
+	}
+	
+	function getSoapResult($action,$xml){
+		$wsdl = BANCO_PATH.'/lib/SPFService_v1.1.wsdl';
+		if(!is_file($wsdl)){
+			$this->error = '';
+		}
+		//$wsdl= 'http://localhost/payment_banco/lib/SPFService_v1.1.wsdl';
+		$client = new RemoteSoapClient($wsdl);
+
+		//$functions = $client->__getFunctions ();
+		//JbPaymentbancoLib::debug ($functions);
+		
+		try{
+			$result = $client->__soapCall($action,$xml);
+			return $result;
+			/*
+			JbPaymentbancoLib::debug($result);
+			//$result = $client->execute('',$xml,$action);
+			$soapEnvelope = new SimpleXMLElement($result);
+			$name_spaces = $soapEnvelope->getNamespaces(true);
+			$namespace = isset($name_spaces['soap-env']) ? $name_spaces['soap-env'] : $name_spaces['SOAP-ENV'];
+			$result=  $soapEnvelope->children($namespace);
+			JbPaymentbancoLib::debug($namespace);
+			return $result;
+			*/
+			
+		}catch(Exception $e){
+			JbPaymentbancoLib::write_log('banco.txt',$e->getMessage());
+			return false;
+		}
+		return false;
 	}
 	
 	/**
