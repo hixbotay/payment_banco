@@ -1,0 +1,52 @@
+As part of the improvements made to the Easy Receiving service with the objective of reinforcing the principles of information security, we inform you that they have been completed. As such, they follow EndPoints and webservice-related information.
+
+ 
+
+1. Reference Creation: https://spf-webservices.bancoeconomico.ao:8443/soa-infra/services/SPF/WSI_PaymentRefCreate/WSI_PaymentRefCreate?wsdl
+
+2. Reference Status Query: https://spf-webservices.bancoeconomico.ao:8443/soa-infra/services/SPF/WSI_PaymentRefDetailsQuery/WSI_PaymentRefDetailsQuery?WSDL
+
+ 
+
+3. Information for order HEADER:
+
+SOURCE: (Find attached)
+
+MSGID: External referential identifier must be unique per request, i.e. concatenation of a GUID with timestamp 218282c8-0102-4587-a47b-8884760c8815-2019-08-12T09: 10: 49.
+
+USERID: (Find attached)
+
+BRANCH: 000
+
+PASSWORD: Do not fill
+
+INVOKETIMESTAMP: Creation timestamp on source system in yyyy-MM-ddThh: dd: ss format.
+
+ 
+
+ 
+
+4. Security policies have been applied to the service, for this it is necessary to include in the soapenv: Header tag the wsse: Security tag in the invocation request as indicated below:
+
+<wsse: Security xmlns: wsse = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns: wsu = "http: // docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd ">
+
+         <wsse: UsernameToken wsu: Id = "soaAuth">
+
+            <wsse: Username> (Find attached) </ wsse: Username>
+
+            <wsse: Password Type = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText"> (Find attached) </ wsse : Password>
+
+            <wsu: Created> 2019-03-14T09: 10: 49.277 + 01: 00 </ wsu: Created>
+
+         </ wsse: UsernameToken>
+
+      </ wsse: Security>
+
+ 
+
+5. Token: (Find attached) Code will be shared by other way
+
+6. EntityId: (Find attached)
+
+ 
+7. The specifications of the respective services are attached.
