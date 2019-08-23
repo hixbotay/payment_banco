@@ -66,8 +66,12 @@ $xml1 = array(
 'amount' => '1234.56',
 );
 
-$result = getSoapResult('importPayment',$xml);
+//$result = getSoapResult('importPayment',$xml);
 //JbPaymentbancoLib::debug($client);
+//wsdl 1
+//way 1
+$client = new RemoteSoapClient($wsdl);
+$result = $client->execute('https://spf-webservices.bancoeconomico.ao:8443/soa-infra/services/SPF/WSI_PaymentRefCreate/WSI_PaymentRefCreate?wsdl',$xml,$action);
 JbPaymentbancoLib::debug($result);
 
 
@@ -124,5 +128,6 @@ function gen_uuid() {
 }
 	
 function getToken(){
-	
+	$token = 'MTU2NTYyMzMzMjg4NTo4ZmZlOTIzMDc5MjhjZDEwYTEzZmFiYjRjMDQ0Y2M3ZDFjNjVlNzNiNGRjYjg3YjcxNzM4ZDA3M2RlMDllNDkwZmE0YjU4NjYyOWU4OTlhYTFkN2UzM2I2MzJhNDI0OGU5MjQ3Zjc1YWM5ZTRkODE1MDQzYTY5MzZmNTM5MmNlZjI0NTA3NjQ2ZTRjM2UzZTVjY2NiOTcyNzg4ZDQwZDZlZmI5ZDE3OGFkYWMxZjE5YjVhNWMxNzY4NjA4OWQ2OGRkNjA5NmQzYzcxZjhmOTE2MjI2ZGJjYmMyYTMwNTMzNDdkMGYyM2FiZTMyMjQ4ODI3ZDdmNGIzNjdhYzQ4YzEwMTU2YmU4MTQ0MThkMjc2YzYzZDhmMzNlYmViYTdiMDhjZDg2NzcyMjY4MDE3OGM0ZGJlZDMwOWI3NTkyYTg0MTgxNDA4NWQyYjkwYzg5YTgyYzFhMzZlNGJlOTE0ZmRkZTc0NzU5NzU0N2VhMGRiYjM1NWM2OTdkYjQxOTE5NmY3MWM4MTc5M2JmODc5MTQxOTlmODljMGRhYWJlYmUyZmQ2MDdiYzhhNDExYmY5YWRhOWZlMjg1NzNmOTFmZTRlNzhjMTUzMDVhNzEzNWFjNjI4NjZiMzA1NDU4OGM5NTY1ZjVhYjBlMjQ2MDI2MTQzZWUyNWE5NDE3YzAyOTc1OTowMDU4OF8xOmFmYTVmNjI1OTk5NWM0ZjU2MDk5MDc0MmJkOTVhMGM4ZGQzZDQzM2UyZjEzODdmYmJmOWJjNmNhOTIwN2UzMWQ1MWU2ZDk4NDNlMWIwNTk5ZGVjMjhhYjEyZTdlNzVhMGEzZWQ4YmU2OWYwYTM1NjllZjRlNDZlMTVhMTE0NmMw';
+	return $token;
 }
