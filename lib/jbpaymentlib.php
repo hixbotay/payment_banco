@@ -40,17 +40,17 @@ Class JbPaymentbancoLib{
 		fclose($fh);
 	}
 	
-	private function get_data_from_url($url,$payload,$header=array(),$timeout = 60,$method=''){
+	static function get_data_from_url($url,$payload=null,$header=array(),$timeout = 60,$method='GET'){
 		$ch = curl_init($url);
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
 		curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, 1 );
 		curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
 		if($method){
-			curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, $method);
+			curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, 'POST');
+			curl_setopt( $ch, CURLOPT_POSTFIELDS, $payload );
 		}
 		
 		// For the body values such as amount, frequency, & date
-		curl_setopt( $ch, CURLOPT_POSTFIELDS, $payload );
 		curl_setopt( $ch, CURLOPT_VERBOSE, true );
 		if(!empty($header)){
 			curl_setopt( $ch, CURLOPT_HTTPHEADER, $header );

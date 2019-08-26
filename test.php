@@ -12,9 +12,10 @@ $username='FLY';
 $entity_id='00588';
 $payment_id='10000';
 $source_id='FLY';
+$source=  'FLY';
 $token=getToken();
 $password='passwordFLY1';
-
+$order_source_id = '1-'.microtime(1);
 
 $xml = '<?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:pay="http://www.bancoeconomico.ao/xsd/paymentrefdetails">
@@ -30,7 +31,7 @@ $xml = '<?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Body>
 	<pay:PaymentRefDetailsQueryRequest>
 	<pay:HEADER>
-		<pay:SOURCE>ECN</pay:SOURCE>
+		<pay:SOURCE>'.$source_id.'</pay:SOURCE>
 		<pay:MSGID>'.$msg_id.'</pay:MSGID>
 		<pay:USERID>'.$user_id.'</pay:USERID>
 		<pay:BRANCH>000</pay:BRANCH>
@@ -50,7 +51,7 @@ $xml = '<?xml version="1.0" encoding="UTF-8"?>
 			<!--Optional:-->
 			<pay:SourcetIdList>
 			<!--1 or more repetitions:-->
-			<pay:SOURCE_ID>'.$source_id.'</pay:SOURCE_ID>
+			<pay:SOURCE_ID>'.$order_source_id.'</pay:SOURCE_ID>
 			</pay:SourcetIdList>
 		</pay:Payment>
 	</pay:BODY>
@@ -58,21 +59,47 @@ $xml = '<?xml version="1.0" encoding="UTF-8"?>
 </soapenv:Body>
 </soapenv:Envelope>';
 
-$xml1 = array(
-'authToken' => 'YYYYYYY',
-'entityId' => '12345',
-'productNumber' => '1',
-'sourceId' => 'A12345',
-'amount' => '1234.56',
-);
+
 
 //$result = getSoapResult('importPayment',$xml);
 //JbPaymentbancoLib::debug($client);
 //wsdl 1
 //way 1
+JbPaymentbancoLib::write_log('banco.txt','create payment request'.PHP_EOL.$xml);
+$action = 'PaymentRefCreateRequest';
 $client = new RemoteSoapClient($wsdl);
 $result = $client->execute('https://spf-webservices.bancoeconomico.ao:8443/soa-infra/services/SPF/WSI_PaymentRefCreate/WSI_PaymentRefCreate?wsdl',$xml,$action);
+JbPaymentbancoLib::write_log('banco.txt','create payment response'.PHP_EOL.$result);
 JbPaymentbancoLib::debug($result);
+
+$xml = array(
+	'Payment'=>[
+		'AUTHTOKEN' => $token,
+		'ENTITYID' => $entity_id,
+		'PaymentIdList' => [
+			['PAYMENT_ID'=>$payment_id]
+		],
+		'SourcetIdList' => [
+			['SOURCE_ID' => $order_source_id]
+		]
+	]
+	
+	);
+	
+$client = new RemoteSoapClient($wsdl);
+$header = new SoapHeader('http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecuritysecext-1.0.xsd', 
+                            'Security',
+                            array(
+								'UsernameToken'=>[
+									'Username'=>$username,
+									'Password'=>$password,
+									'Created'=>(new DateTime())->format('Y-m-d H:i:s'),
+								]
+							));
+
+$client->__setSoapHeaders($header);
+$result = $client->__soapCall($action, $xml);
+JbPaymentbancoLib::write_log('banco.txt','create payment response'.PHP_EOL.$result);
 
 
 function getSoapResult($action,$xml){
