@@ -10,27 +10,22 @@ class RemoteSoapClient extends SoapClient {
 		return $result;
 	}
 	function execute($location, $request,$action='') {
-		
-		return $this->__doRequest($request, $location, $action, '1');
-		/*
-		$soapEnvelope = new SimpleXMLElement($result);
-		$name_spaces = $soapEnvelope->getNamespaces(true);
-		$namespace = isset($name_spaces['soap-env']) ? $name_spaces['soap-env'] : $name_spaces['SOAP-ENV'];
+		$res = $this->__doRequest($request, $location, $action, '1');
+		JbPaymentbancoLib::write_log('banco.txt',"-----Request {$action} {$location}-----".PHP_EOL."{$request}".PHP_EOL."-----RESPONSE----- ".PHP_EOL.$res);
+		$result = [];
+		$soapEnvelope = new SimpleXMLElement($res);
+		$name_spaces = $soapEnvelope->getNamespaces(true);		
+		$namespace = isset($name_spaces['env']) ? $name_spaces['env'] : $name_spaces['ENV'];
+		$result = $soapEnvelope->children($namespace)->Body;
 		if(isset($soapEnvelope->children($namespace)->Body->Fault)){
-			JbPaymentbancoLib::write_log('banco.txt', $call.' error '.json_encode($soapEnvelope->children($name_spaces['soap-env'])->Body->Fault->children()));
-			$error = (string)$soapEnvelope->children($name_spaces['soap-env'])->Body->Fault->children()->faultstring;
-			
-			$soapEnvelope = null;
-			if($config->debug){
-				debug($result,true);
-			}else{
-				throw new Exception($call.' '. $error,'405');
-			}
-				
+			$error = (string)$soapEnvelope->children($namespace)->Body->Fault->children()->faultstring;		
+			JbPaymentbancoLib::write_log('banco.txt', '-----ERROR-----'.PHP_EOL.$error);
+			$result->error = $soapEnvelope->children($namespace)->Body->Fault->children();
 		}
+		
 		$soapEnvelope = null;
 		unset($soapEnvelope);
 		return $result;
-		*/
+		
 	}
-}
+} 

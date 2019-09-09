@@ -22,6 +22,13 @@ Class JbPaymentbancoLib{
 		return false;
 	}
 	
+	public static function getCustomerByOrderID($id){
+		$db = JFactory::getDbo();
+		return $db->setQuery("SELECT c.* FROM #__bookpro_customer as c 
+		LEFT JOIN #__bookpro_orders as order ON order.user_id=c.id 
+		where order.id=".(int)$id)->loadObject();
+	}
+	
 	static function write_log($log_file, $error, $type = E_USER_NOTICE){
 		date_default_timezone_set('Asia/Ho_Chi_Minh');
 		$date = date('d/m/Y H:i:s');
@@ -45,7 +52,7 @@ Class JbPaymentbancoLib{
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
 		curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, 1 );
 		curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
-		if($method){
+		if($method=='POST'){
 			curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, 'POST');
 			curl_setopt( $ch, CURLOPT_POSTFIELDS, $payload );
 		}
@@ -174,4 +181,10 @@ Class JbPaymentbancoLib{
 		echo '</pre>';
 	}
 }
+
+function debug($value){
+		echo '<pre>';
+		print_r($value);
+		echo '</pre>';
+	}
 ?>

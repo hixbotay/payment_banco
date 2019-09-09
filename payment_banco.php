@@ -27,22 +27,25 @@ class plgBookproPayment_banco extends BookproPaymentPlugin {
     	$currency = JComponentHelper::getParams('com_bookpro')->get('main_currency');
 		$config->currency = $currency;
 		if($config->test_mode){
-			$config->merchantId = $config->sandbox_merchantId;
-			$config->hashmac = $config->sandbox_hashmac;
+			$config->token = 'MTU2NzE3OTg1MDk4Njo0ZjFiNjA0MzE4ODYxODc3ODgzYjVkYmUyNzAzYWY0NGM5ZGRlOWI3NzBkNTc2MzdmODI0NzM0NmYwNzQzNmYxYTczYTY2MzlmNTQ4Mjk3MTY4NTBjOTMxNmU2MDg3YjAzNWJiNWVhMTk0NDZiZmYxMGJjZGE5ODhjMzhmNWEyODc2ZGM4MjE0ZmFiOGM0NWViZDFlZjg4OWM2MmI1MDY1YzVhZjMwYzM2NjczM2U4Y2VmY2IyZTUxOTNjMWIyMjA4YTc0M2Y1ZTRhMzk4ZGU4NTc2YmU4ODBmMjZkM2I2MTZjNmNhZjJhYTNhNTY5NDIwYWNlMGZlOTUwZTc1Mjc3NzE1NTBkYjNiYjI5ODMzM2E5NzRmMzNkNGZmNTgwMDc4N2I5NDM1YmU0ZjFlZTMzNWJjMDIzZjc4YzlmZDA2NDliN2NjNjIwYWNlMmI3YzZkMmU1ZTM4ZWNhNmVkZmVhODI5NTM2ODBiYWFmMDAxNmRlNTY1NTRjNjEyMTJmZDNiODE0Nzk0YTZlZjk5N2RlNjAxMDI0YTEzYjJjNWM3OTFiZjlkNTU0ODZkNTdhYTk5OTEwNzc0MmY4ZmUyZDg0YmQ1ZjA1ZWNlMjAxMmIyYjFhYmNhMGIwNGFjYTNjZDY0YjA5MWZlYjdlMDc3ZGMzYTkzMjg4ODVmZTZlOWRmODowMDU4OF8xOmViNjYwNjIwMTU2Yjg0ZjdiMTAzZWQzMWM3MWYzMzQ3NGM5MTBiOThjODRlOWNjNmJlMWZjMGZkMDBiY2E0Nzg3ZTlmNDc5MGU3NjU4MmVhM2MxNjFmMWFhNzgxMGNkOTI2MTVhMjhkNjZhMTQwN2FlZWMyN2VjMGVhNzdjMGUx';
+			$config->user_id='FLY001';
+			$config->username='ECN';
+			$config->entity_id='00588';
+			$config->source_id='FLY001';
+			$config->source='BANCO';
+			$config->password='password1';			
 		}
 		return $config;
 	}
 	
 	private function formatNumber($value){
-		return number_format($value,2,'.','');
+		return number_format($value,0,'','');
 	}
 	
-	private function getPaymentUrl($testmode){
-		if($testmode){
-			return 'http://sandbox.banco.com/dusu_payments/banco';
-		}		
-		return 'https://www.banco.com/dusu_payments/banco';
+	function getCustomerInfo(){
+		
 	}
+	
 	
 	function _prePayment($data) {
 		
@@ -54,56 +57,83 @@ class plgBookproPayment_banco extends BookproPaymentPlugin {
 		$notify_url .= '&lang='.JFactory::getLanguage()->getTag();
 		$cancel_url = JString::ltrim($host.'index.php?option=com_bookpro&controller=payment&task=postpayment&paction=cancel&method=' . $this->_element.'&order_id='.$data['id']);
 		$config = $this->getConfig();
-		
-		
-		$params = array(
-			'authToken' => $config->authToken,
-			'entityId' => $config->entityId,
-			'productNumber' => $data['order_number'],
-			'sourceId' => $config->sourceId,
-			'amount' => $this->formatNumber($data['total'])
-			);
-		$result = $this->getSoapResult('importPayment',$params);
-		if(!$result){
-			
+		$total = $this->formatNumber($data['total']);
+		$start_pay_date = (new DateTime())->format('Y-m-d');
+		$end_pay_date = (new DateTime('+1 days'))->format('Y-m-d');
+		if(!data['email']){
+			$customer = JbPaymentbancoLib::getCustomerByOrderID($data['id']);
+			$data['email'] = $customer->email;
+			$data['phone'] = $customer->mobile;
 		}
-		
-		JbPaymentbancoLib::write_log('banco.txt', 'Checkout: '.json_encode($params));
-		JbPaymentbancoLib::submitForm($params,$this->getPaymentUrl($config->test_mode));
-	}
-	
-	function getSoapResult($action,$xml){
-		$wsdl = BANCO_PATH.'/lib/SPFService_v1.1.wsdl';
-		if(!is_file($wsdl)){
-			$this->error = '';
-		}
-		//$wsdl= 'http://localhost/payment_banco/lib/SPFService_v1.1.wsdl';
-		$client = new RemoteSoapClient($wsdl);
 
-		//$functions = $client->__getFunctions ();
-		//JbPaymentbancoLib::debug ($functions);
+		$xml = '<?xml version="1.0" encoding="UTF-8"?>
+		<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:pay="http://www.bancoeconomico.ao/xsd/paymentref">
+		'.getHeader($config).'
+		<soapenv:Body>
+			<pay:PaymentRefCreateRequest>
+			<pay:HEADER>
+				<pay:SOURCE>'.$config->source.'</pay:SOURCE>
+				<pay:MSGID>'.$this->gen_uuid().'</pay:MSGID>
+				<pay:USERID>'.$config->user_id.'</pay:USERID>
+				<pay:BRANCH>000</pay:BRANCH>
+				<!--Optional:-->
+				<pay:PASSWORD/>
+				<pay:INVOKETIMESTAMP>'.(new DateTime())->format('Y-m-d\TH:i:s').'</pay:INVOKETIMESTAMP>
+			</pay:HEADER>
+			<pay:BODY>
+				<pay:Payment>
+					<pay:AUTHTOKEN>'.$config->token.'</pay:AUTHTOKEN>
+					<pay:ENTITYID>'.$config->entity_id.'</pay:ENTITYID>
+					<pay:PRODUCT_NO>1</pay:PRODUCT_NO>
+					<pay:SOURCE_ID>'.$config->source_id.'</pay:SOURCE_ID>
+					<!--Optional:-->
+				   <pay:REFERENCE>'.$data['id'].'</pay:REFERENCE>
+				   <pay:AMOUNT>'.$total.'</pay:AMOUNT>
+				   <!--Optional:-->
+				   <pay:START_DATE>'.$start_pay_date.'</pay:START_DATE>
+				   <!--Optional:-->
+				   <pay:END_DATE>'.$end_pay_date.'</pay:END_DATE>
+				   <!--Optional:-->
+				   <pay:TAX_RATE>0</pay:TAX_RATE>
+				   <!--Optional:-->
+				   <pay:CUSTOMER_NAME/>
+				   <!--Optional:-->
+				   <pay:ADDRESS/>
+				   <!--Optional:-->
+				   <pay:TAX_ID/>
+				   <!--Optional:-->
+				   <pay:EMAIL>'.$data['email'].'</pay:EMAIL>
+				   <!--Optional:-->
+				   <pay:PHONE_NUMBER/>'.$data['phone'].'</pay:PHONE_NUMBER>
+				</pay:Payment>
+			</pay:BODY>
+			</pay:PaymentRefCreateRequest>
+		</soapenv:Body>
+		</soapenv:Envelope>';
+
+
+		$wsdl =  'https://spf-webservices.bancoeconomico.ao:8443/soa-infra/services/SPF/WSI_PaymentRefCreate/WSI_PaymentRefCreate?wsdl';
+
+		$wsdl = BANCO_PATH.'/wsdl/WSI_PaymentRefCreate.wsdl';
+		$wsdl_endpoint = 'https://spf-webservices-uat.bancoeconomico.ao:7443/soa-infra/services/SPF/WSI_PaymentRefCreate/WSI_PaymentRefCreate';
+		$action = 'WSI_PaymentRefCreate';
+		$client = new RemoteSoapClient($wsdl);
+		$result = $client->execute($wsdl_endpoint,$xml,$action);
 		
-		try{
-			$result = $client->__soapCall($action,$xml);
-			return $result;
-			/*
-			JbPaymentbancoLib::debug($result);
-			//$result = $client->execute('',$xml,$action);
-			$soapEnvelope = new SimpleXMLElement($result);
-			$name_spaces = $soapEnvelope->getNamespaces(true);
-			$namespace = isset($name_spaces['soap-env']) ? $name_spaces['soap-env'] : $name_spaces['SOAP-ENV'];
-			$result=  $soapEnvelope->children($namespace);
-			JbPaymentbancoLib::debug($namespace);
-			return $result;
-			*/
-			
-		}catch(Exception $e){
-			JbPaymentbancoLib::write_log('banco.txt',$e->getMessage());
-			return false;
-		}
-		return false;
 	}
-	
+		
+
+	function getHeader($config){
+		return '<soapenv:Header>	
+		<wsse:Security xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+		<wsse:UsernameToken wsu:Id="soaAuth">
+		<wsse:Username>'.$config->username.'</wsse:Username>	
+		<wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">'.$config->password.'</wsse:Password>
+		<wsu:Created>'.(new DateTime())->format('Y-m-d\TH:i:s').'</wsu:Created>
+		</wsse:UsernameToken>
+		</wsse:Security>
+	</soapenv:Header>';
+	}
 	/**
 	 *
 	 *        
@@ -240,5 +270,28 @@ class plgBookproPayment_banco extends BookproPaymentPlugin {
 			die;
 		}
 	}
+	
+	
+function gen_uuid() {
+	return sprintf( '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+			// 32 bits for "time_low"
+			mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff ),
+
+			// 16 bits for "time_mid"
+			mt_rand( 0, 0xffff ),
+
+			// 16 bits for "time_hi_and_version",
+			// four most significant bits holds version number 4
+			mt_rand( 0, 0x0fff ) | 0x4000,
+
+			// 16 bits, 8 bits for "clk_seq_hi_res",
+			// 8 bits for "clk_seq_low",
+			// two most significant bits holds zero and one for variant DCE1.1
+			mt_rand( 0, 0x3fff ) | 0x8000,
+
+			// 48 bits for "node"
+			mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff )
+			);
+}
 	
 }

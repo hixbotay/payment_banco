@@ -1,37 +1,36 @@
 <?php 
 ini_set('soap.wsdl_cache_enabled', 0);
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
 define('BANCO_PATH',__DIR__);
+define('JPATH_ROOT',dirname(dirname(dirname(__DIR__))));
 
 include 'lib/soapclient.php';
 include 'lib/jbpaymentlib.php';
-$endpoint = 'http://bancoeconomico.ao/economiconet/spfService';
+
 
 $msg_id = gen_uuid();
 $user_id = 'FLY001';
-$username='FLY';
+$username='ECN';
 $entity_id='00588';
-$payment_id='10000';
-$source_id='FLY';
-$source=  'FLY';
+$source_id='FLY001';
+$source='BANCO';
 $token=getToken();
-$password='passwordFLY1';
-$order_source_id = '1-'.microtime(1);
+$password='password1';
+$total = 1;
+$email = 'alice.ngunga@bancoecnomico.ao';
+$start_pay_date = (new DateTime())->format('Y-m-d');
+$end_pay_date = (new DateTime('+1 days'))->format('Y-m-d');
+$config = (object)['username'=>$username,'password'=>$password];
 
 $xml = '<?xml version="1.0" encoding="UTF-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:pay="http://www.bancoeconomico.ao/xsd/paymentrefdetails">
-<soapenv:Header>
-	<wsse:Security xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecuritysecext-1.0.xsd" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
-	<wsse:UsernameToken wsu:Id="soaAuth">
-	<wsse:Username>'.$username.'</wsse:Username>
-	<wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-tokenprofile-1.0#PasswordText">'.$password.'</wsse:Password>
-	<wsu:Created>'.(new DateTime())->format('Y-m-d H:i:s').'</wsu:Created>
-	</wsse:UsernameToken>
-	</wsse:Security>
-</soapenv:Header>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:pay="http://www.bancoeconomico.ao/xsd/paymentref">
+'.getHeader($config).'
 <soapenv:Body>
-	<pay:PaymentRefDetailsQueryRequest>
+	<pay:PaymentRefCreateRequest>
 	<pay:HEADER>
-		<pay:SOURCE>'.$source_id.'</pay:SOURCE>
+		<pay:SOURCE>'.$source.'</pay:SOURCE>
 		<pay:MSGID>'.$msg_id.'</pay:MSGID>
 		<pay:USERID>'.$user_id.'</pay:USERID>
 		<pay:BRANCH>000</pay:BRANCH>
@@ -43,63 +42,95 @@ $xml = '<?xml version="1.0" encoding="UTF-8"?>
 		<pay:Payment>
 			<pay:AUTHTOKEN>'.$token.'</pay:AUTHTOKEN>
 			<pay:ENTITYID>'.$entity_id.'</pay:ENTITYID>
+			<pay:PRODUCT_NO>1</pay:PRODUCT_NO>
+			<pay:SOURCE_ID>'.$source_id.'</pay:SOURCE_ID>
 			<!--Optional:-->
-			<pay:PaymentIdList>
-			<!--Zero or more repetitions:-->
-			<pay:PAYMENT_ID>'.$payment_id.'</pay:PAYMENT_ID>
-			</pay:PaymentIdList>
-			<!--Optional:-->
-			<pay:SourcetIdList>
-			<!--1 or more repetitions:-->
-			<pay:SOURCE_ID>'.$order_source_id.'</pay:SOURCE_ID>
-			</pay:SourcetIdList>
+		   <pay:REFERENCE/>
+		   <pay:AMOUNT>'.$total.'</pay:AMOUNT>
+		   <!--Optional:-->
+		   <pay:START_DATE>'.$start_pay_date.'</pay:START_DATE>
+		   <!--Optional:-->
+		   <pay:END_DATE>'.$end_pay_date.'</pay:END_DATE>
+		   <!--Optional:-->
+		   <pay:TAX_RATE>0</pay:TAX_RATE>
+		   <!--Optional:-->
+		   <pay:CUSTOMER_NAME/>
+		   <!--Optional:-->
+		   <pay:ADDRESS/>
+		   <!--Optional:-->
+		   <pay:TAX_ID/>
+		   <!--Optional:-->
+		   <pay:EMAIL>'.$email.'</pay:EMAIL>
+		   <!--Optional:-->
+		   <pay:PHONE_NUMBER/>
 		</pay:Payment>
 	</pay:BODY>
-	</pay:PaymentRefDetailsQueryRequest>
+	</pay:PaymentRefCreateRequest>
 </soapenv:Body>
 </soapenv:Envelope>';
-
 
 
 //$result = getSoapResult('importPayment',$xml);
 //JbPaymentbancoLib::debug($client);
 //wsdl 1
-//way 1
-JbPaymentbancoLib::write_log('banco.txt','create payment request'.PHP_EOL.$xml);
-$action = 'PaymentRefCreateRequest';
-$client = new RemoteSoapClient($wsdl);
-$result = $client->execute('https://spf-webservices.bancoeconomico.ao:8443/soa-infra/services/SPF/WSI_PaymentRefCreate/WSI_PaymentRefCreate?wsdl',$xml,$action);
-JbPaymentbancoLib::write_log('banco.txt','create payment response'.PHP_EOL.$result);
-JbPaymentbancoLib::debug($result);
+//way 1\
+$wsdl =  'https://spf-webservices.bancoeconomico.ao:8443/soa-infra/services/SPF/WSI_PaymentRefCreate/WSI_PaymentRefCreate?wsdl';
 
-$xml = array(
-	'Payment'=>[
-		'AUTHTOKEN' => $token,
-		'ENTITYID' => $entity_id,
-		'PaymentIdList' => [
-			['PAYMENT_ID'=>$payment_id]
-		],
-		'SourcetIdList' => [
-			['SOURCE_ID' => $order_source_id]
-		]
-	]
-	
-	);
-	
+$wsdl = BANCO_PATH.'/wsdl/WSI_PaymentRefCreate.wsdl';
+$wsdl_endpoint = 'https://spf-webservices-uat.bancoeconomico.ao:7443/soa-infra/services/SPF/WSI_PaymentRefCreate/WSI_PaymentRefCreate';
+$action = 'WSI_PaymentRefCreate';
 $client = new RemoteSoapClient($wsdl);
-$header = new SoapHeader('http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecuritysecext-1.0.xsd', 
-                            'Security',
-                            array(
-								'UsernameToken'=>[
-									'Username'=>$username,
-									'Password'=>$password,
-									'Created'=>(new DateTime())->format('Y-m-d H:i:s'),
-								]
-							));
+//$client->__setSoapHeaders($header); 
+$result = $client->execute($wsdl_endpoint,$xml,$action);
 
-$client->__setSoapHeaders($header);
-$result = $client->__soapCall($action, $xml);
-JbPaymentbancoLib::write_log('banco.txt','create payment response'.PHP_EOL.$result);
+//$functions = $client->__getFunctions ();
+//debug($functions);die;
+//$result = $client->__soapCall($action,$xml1);
+debug($result);
+
+
+$xml_query = '<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:pay="http://www.bancoeconomico.ao/xsd/paymentrefdetails">
+   '.getHeader($config).'
+   <soapenv:Body>
+      <pay:PaymentRefDetailsQueryRequest>
+          <pay:HEADER>
+            <pay:SOURCE>BANCO</pay:SOURCE>
+            <pay:MSGID>1e504bc7-8fdf-493e-abb5-e26871e11915</pay:MSGID>
+            <pay:USERID>FLY001</pay:USERID>
+            <pay:BRANCH>000</pay:BRANCH>
+            <!--Optional:-->
+            <pay:PASSWORD/>
+            <pay:INVOKETIMESTAMP>'.(new DateTime())->format('Y-m-d\TH:i:s').'</pay:INVOKETIMESTAMP>
+         </pay:HEADER>
+         <pay:BODY>
+            <pay:Payment>
+               <pay:AUTHTOKEN>'.$token.'</pay:AUTHTOKEN>
+               <pay:ENTITYID>00588</pay:ENTITYID>
+               <!--Optional:-->
+               <pay:PaymentIdList>
+                  <!--Zero or more repetitions:-->
+                  <pay:PAYMENT_ID>43404</pay:PAYMENT_ID>
+               </pay:PaymentIdList>
+               <!--Optional:-->
+               <pay:SourcetIdList>
+                  <!--Zero or more repetitions:-->
+                  <pay:SOURCE_ID/>
+               </pay:SourcetIdList>
+            </pay:Payment>
+         </pay:BODY>
+      </pay:PaymentRefDetailsQueryRequest>
+   </soapenv:Body>
+</soapenv:Envelope>';
+
+
+$wsdl = BANCO_PATH.'/wsdl/WSI_PaymentRefDetailsQuery.wsdl';
+$wsdl_endpoint = 'https://spf-webservices-uat.bancoeconomico.ao:7443/soa-infra/services/SPF/WSI_PaymentRefDetailsQuery/WSI_PaymentRefDetailsQuery';
+$action = 'WSI_PaymentRefDetailsQuery';
+$client = new RemoteSoapClient($wsdl);
+//$client->__setSoapHeaders($header); 
+$result = $client->execute($wsdl_endpoint,$xml_query,$action);
+debug($result->Payment_List->Payment_Details->Status);
 
 
 function getSoapResult($action,$xml){
@@ -155,6 +186,19 @@ function gen_uuid() {
 }
 	
 function getToken(){
-	$token = 'MTU2NTYyMzMzMjg4NTo4ZmZlOTIzMDc5MjhjZDEwYTEzZmFiYjRjMDQ0Y2M3ZDFjNjVlNzNiNGRjYjg3YjcxNzM4ZDA3M2RlMDllNDkwZmE0YjU4NjYyOWU4OTlhYTFkN2UzM2I2MzJhNDI0OGU5MjQ3Zjc1YWM5ZTRkODE1MDQzYTY5MzZmNTM5MmNlZjI0NTA3NjQ2ZTRjM2UzZTVjY2NiOTcyNzg4ZDQwZDZlZmI5ZDE3OGFkYWMxZjE5YjVhNWMxNzY4NjA4OWQ2OGRkNjA5NmQzYzcxZjhmOTE2MjI2ZGJjYmMyYTMwNTMzNDdkMGYyM2FiZTMyMjQ4ODI3ZDdmNGIzNjdhYzQ4YzEwMTU2YmU4MTQ0MThkMjc2YzYzZDhmMzNlYmViYTdiMDhjZDg2NzcyMjY4MDE3OGM0ZGJlZDMwOWI3NTkyYTg0MTgxNDA4NWQyYjkwYzg5YTgyYzFhMzZlNGJlOTE0ZmRkZTc0NzU5NzU0N2VhMGRiYjM1NWM2OTdkYjQxOTE5NmY3MWM4MTc5M2JmODc5MTQxOTlmODljMGRhYWJlYmUyZmQ2MDdiYzhhNDExYmY5YWRhOWZlMjg1NzNmOTFmZTRlNzhjMTUzMDVhNzEzNWFjNjI4NjZiMzA1NDU4OGM5NTY1ZjVhYjBlMjQ2MDI2MTQzZWUyNWE5NDE3YzAyOTc1OTowMDU4OF8xOmFmYTVmNjI1OTk5NWM0ZjU2MDk5MDc0MmJkOTVhMGM4ZGQzZDQzM2UyZjEzODdmYmJmOWJjNmNhOTIwN2UzMWQ1MWU2ZDk4NDNlMWIwNTk5ZGVjMjhhYjEyZTdlNzVhMGEzZWQ4YmU2OWYwYTM1NjllZjRlNDZlMTVhMTE0NmMw';
+	$token = 'MTU2NzE3OTg1MDk4Njo0ZjFiNjA0MzE4ODYxODc3ODgzYjVkYmUyNzAzYWY0NGM5ZGRlOWI3NzBkNTc2MzdmODI0NzM0NmYwNzQzNmYxYTczYTY2MzlmNTQ4Mjk3MTY4NTBjOTMxNmU2MDg3YjAzNWJiNWVhMTk0NDZiZmYxMGJjZGE5ODhjMzhmNWEyODc2ZGM4MjE0ZmFiOGM0NWViZDFlZjg4OWM2MmI1MDY1YzVhZjMwYzM2NjczM2U4Y2VmY2IyZTUxOTNjMWIyMjA4YTc0M2Y1ZTRhMzk4ZGU4NTc2YmU4ODBmMjZkM2I2MTZjNmNhZjJhYTNhNTY5NDIwYWNlMGZlOTUwZTc1Mjc3NzE1NTBkYjNiYjI5ODMzM2E5NzRmMzNkNGZmNTgwMDc4N2I5NDM1YmU0ZjFlZTMzNWJjMDIzZjc4YzlmZDA2NDliN2NjNjIwYWNlMmI3YzZkMmU1ZTM4ZWNhNmVkZmVhODI5NTM2ODBiYWFmMDAxNmRlNTY1NTRjNjEyMTJmZDNiODE0Nzk0YTZlZjk5N2RlNjAxMDI0YTEzYjJjNWM3OTFiZjlkNTU0ODZkNTdhYTk5OTEwNzc0MmY4ZmUyZDg0YmQ1ZjA1ZWNlMjAxMmIyYjFhYmNhMGIwNGFjYTNjZDY0YjA5MWZlYjdlMDc3ZGMzYTkzMjg4ODVmZTZlOWRmODowMDU4OF8xOmViNjYwNjIwMTU2Yjg0ZjdiMTAzZWQzMWM3MWYzMzQ3NGM5MTBiOThjODRlOWNjNmJlMWZjMGZkMDBiY2E0Nzg3ZTlmNDc5MGU3NjU4MmVhM2MxNjFmMWFhNzgxMGNkOTI2MTVhMjhkNjZhMTQwN2FlZWMyN2VjMGVhNzdjMGUx';
 	return $token;
 }
+
+function getHeader($config){
+	return '<soapenv:Header>	
+	<wsse:Security xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+	<wsse:UsernameToken wsu:Id="soaAuth">
+	<wsse:Username>'.$config->username.'</wsse:Username>	
+	<wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">'.$config->password.'</wsse:Password>
+	<wsu:Created>'.(new DateTime())->format('Y-m-d\TH:i:s').'</wsu:Created>
+	</wsse:UsernameToken>
+	</wsse:Security>
+</soapenv:Header>';
+}
+
