@@ -146,7 +146,7 @@ class plgBookproPayment_banco extends BookproPaymentPlugin {
 	 *        
 	 */
 	function _postPayment($data) {
-		
+		die('df');
 		
 		// Process the payment
 		$input = JFactory::getApplication ()->input;

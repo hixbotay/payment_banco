@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<wsdl:definitions
+     name="WSI_PaymentRefCreate"
+     targetNamespace="http://www.bancoeconomico.ao/soa/paymentref"
+     xmlns:tns="http://www.bancoeconomico.ao/soa/paymentref"
+     xmlns:inp1="http://www.bancoeconomico.ao/xsd/paymentref"
+     xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+     xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+    >
+    <wsdl:documentation>
+        <abstractWSDL>http://spf-webservices-uat.bancoeconomico.ao:7443/soa-infra/services/SPF/WSI_PaymentRefCreate!1.0/WSDLs/WSI_PaymentRefCreate.wsdl</abstractWSDL>
+    </wsdl:documentation>
+<wsp:Policy xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" wsu:Id="third_party_auth_policy">
+   <sp:SupportingTokens xmlns:sp="http://schemas.xmlsoap.org/ws/2005/07/securitypolicy">
+      <wsp:Policy>
+         <sp:UsernameToken sp:IncludeToken="http://schemas.xmlsoap.org/ws/2005/07/securitypolicy/IncludeToken/AlwaysToRecipient">
+            <wsp:Policy>
+               <sp:WssUsernameToken10/>
+            </wsp:Policy>
+         </sp:UsernameToken>
+      </wsp:Policy>
+   </sp:SupportingTokens>
+</wsp:Policy>    <wsdl:types>
+        <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+            <xsd:import namespace="http://www.bancoeconomico.ao/xsd/paymentref" schemaLocation="http://spf-webservices-uat.bancoeconomico.ao:7443/soa-infra/services/SPF/WSI_PaymentRefCreate/WSI_PaymentRefCreate?XSD=../Schemas/PaymentRefCreate.xsd"/>
+        </xsd:schema>
+    </wsdl:types>
+    <wsdl:message name="paymentRefCreateRequestMessage">
+        <wsdl:part name="paymentRefCreateRequest" element="inp1:PaymentRefCreateRequest"/>
+    </wsdl:message>
+    <wsdl:message name="paymentRefCreateResponseMessage">
+        <wsdl:part name="paymentRefCreateResponse" element="inp1:PaymentRefCreateResponse"/>
+    </wsdl:message>
+    <wsdl:portType name="paymentRefCreate_ptt">
+        <wsdl:operation name="paymentRefCreate_execute">
+            <wsdl:input message="tns:paymentRefCreateRequestMessage"/>
+            <wsdl:output message="tns:paymentRefCreateResponseMessage"/>
+        </wsdl:operation>
+    </wsdl:portType>
+    <wsdl:binding name="paymentRefCreate_pttBinding" type="tns:paymentRefCreate_ptt">
+        <soap:binding transport="http://schemas.xmlsoap.org/soap/http"/>
+      <wsp:PolicyReference xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" URI="#third_party_auth_policy" wsdl:required="false"/>
+        <wsdl:operation name="paymentRefCreate_execute">
+            <soap:operation style="document" soapAction="paymentRefCreate_execute"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+    </wsdl:binding>
+    <wsdl:service name="WSI_PaymentRefCreate">
+        <wsdl:port name="paymentRefCreate_pt" binding="tns:paymentRefCreate_pttBinding">
+            <soap:address location="http://spf-webservices-uat.bancoeconomico.ao:7443/soa-infra/services/SPF/WSI_PaymentRefCreate/WSI_PaymentRefCreate"/>
+        </wsdl:port>
+    </wsdl:service>
+</wsdl:definitions>
