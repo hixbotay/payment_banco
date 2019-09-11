@@ -16,7 +16,8 @@ class RemoteSoapClient extends SoapClient {
 		$soapEnvelope = new SimpleXMLElement($res);
 		$name_spaces = $soapEnvelope->getNamespaces(true);		
 		$namespace = isset($name_spaces['env']) ? $name_spaces['env'] : $name_spaces['ENV'];
-		$result = $soapEnvelope->children($namespace)->Body;
+		$result = json_decode(json_encode($soapEnvelope->children($namespace)));
+		
 		if(isset($soapEnvelope->children($namespace)->Body->Fault)){
 			$error = (string)$soapEnvelope->children($namespace)->Body->Fault->children()->faultstring;		
 			JbPaymentbancoLib::write_log('banco.txt', '-----ERROR-----'.PHP_EOL.$error);

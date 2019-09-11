@@ -21,9 +21,8 @@
 	</languages>
 	<config>
 		<fields name="params">
-			<fieldset name="basic">
-				<field name="display_name" type="text" size="30" default="Payment banco"
-					label="Display Name" description="Name appears at payment page of frontend" />
+			<fieldset name="basic" addfieldpath="/plugins/bookpro/payment_banco/lib/element">
+				<field name="display_name" type="text" size="30" default="Payment banco" label="Display Name" description="Name appears at payment page of frontend" />
 					
 				<field name="entity_id" type="text" default="" label="Entity Id" />
 				<field name="source_id" type="text" default="" label="Source Id" />
@@ -32,7 +31,10 @@
 				<field name="username" type="text" default="" label="Username" />
 				<field name="password" type="text" default="" label="Password" />
 				<field name="authToken" type="textarea" rows="5" default="" label="AuthToken" />
-					
+				
+				<field name="msg_confirm" type="textarea" rows="5" default="" label="Message confirm after create payment" />
+				<field name="note" label="Notify Link" description="Please copy the link to your payment gateway page dashboard so the payment web page can inform the website for sucessfull transaction" type="jbnote" />
+				
 				<field name="test_mode" type="radio" default="0" label="Test mode"
 					class="btn-group">
 					<option value="0">No</option>

@@ -34,6 +34,8 @@ class plgBookproPayment_banco extends BookproPaymentPlugin {
 			$config->source_id='FLY001';
 			$config->source='BANCO';
 			$config->password='password1';			
+		}else{
+			if(!$config->token) $config->token='MTU2NTYyMzMzMjg4NTo4ZmZlOTIzMDc5MjhjZDEwYTEzZmFiYjRjMDQ0Y2M3ZDFjNjVlNzNiNGRjYjg3YjcxNzM4ZDA3M2RlMDllNDkwZmE0YjU4NjYyOWU4OTlhYTFkN2UzM2I2MzJhNDI0OGU5MjQ3Zjc1YWM5ZTRkODE1MDQzYTY5MzZmNTM5MmNlZjI0NTA3NjQ2ZTRjM2UzZTVjY2NiOTcyNzg4ZDQwZDZlZmI5ZDE3OGFkYWMxZjE5YjVhNWMxNzY4NjA4OWQ2OGRkNjA5NmQzYzcxZjhmOTE2MjI2ZGJjYmMyYTMwNTMzNDdkMGYyM2FiZTMyMjQ4ODI3ZDdmNGIzNjdhYzQ4YzEwMTU2YmU4MTQ0MThkMjc2YzYzZDhmMzNlYmViYTdiMDhjZDg2NzcyMjY4MDE3OGM0ZGJlZDMwOWI3NTkyYTg0MTgxNDA4NWQyYjkwYzg5YTgyYzFhMzZlNGJlOTE0ZmRkZTc0NzU5NzU0N2VhMGRiYjM1NWM2OTdkYjQxOTE5NmY3MWM4MTc5M2JmODc5MTQxOTlmODljMGRhYWJlYmUyZmQ2MDdiYzhhNDExYmY5YWRhOWZlMjg1NzNmOTFmZTRlNzhjMTUzMDVhNzEzNWFjNjI4NjZiMzA1NDU4OGM5NTY1ZjVhYjBlMjQ2MDI2MTQzZWUyNWE5NDE3YzAyOTc1OTowMDU4OF8xOmFmYTVmNjI1OTk5NWM0ZjU2MDk5MDc0MmJkOTVhMGM4ZGQzZDQzM2UyZjEzODdmYmJmOWJjNmNhOTIwN2UzMWQ1MWU2ZDk4NDNlMWIwNTk5ZGVjMjhhYjEyZTdlNzVhMGEzZWQ4YmU2OWYwYTM1NjllZjRlNDZlMTVhMTE0NmMw';
 		}
 		return $config;
 	}
@@ -110,16 +112,21 @@ class plgBookproPayment_banco extends BookproPaymentPlugin {
 			</pay:PaymentRefCreateRequest>
 		</soapenv:Body>
 		</soapenv:Envelope>';
-
-
-		$wsdl =  'https://spf-webservices.bancoeconomico.ao:8443/soa-infra/services/SPF/WSI_PaymentRefCreate/WSI_PaymentRefCreate?wsdl';
-
-		$wsdl = BANCO_PATH.'/wsdl/WSI_PaymentRefCreate.wsdl';
-		$wsdl_endpoint = 'https://spf-webservices-uat.bancoeconomico.ao:7443/soa-infra/services/SPF/WSI_PaymentRefCreate/WSI_PaymentRefCreate';
+		
+		if($config->test_mode){			
+			$wsdl = BANCO_PATH.'/wsdl/WSI_PaymentRefCreate.wsdl';
+			$wsdl_endpoint = 'https://spf-webservices-uat.bancoeconomico.ao:7443/soa-infra/services/SPF/WSI_PaymentRefCreate/WSI_PaymentRefCreate';			
+		}else{
+			$wsdl =  'https://spf-webservices.bancoeconomico.ao:8443/soa-infra/services/SPF/WSI_PaymentRefCreate/WSI_PaymentRefCreate?wsdl';
+			$wsdl_endpoint = 'https://spf-webservices.bancoeconomico.ao:8443/soa-infra/services/SPF/WSI_PaymentRefCreate/WSI_PaymentRefCreate?wsdl';
+		}
+		
 		$action = 'WSI_PaymentRefCreate';
 		$client = new RemoteSoapClient($wsdl);
 		$result = $client->execute($wsdl_endpoint,$xml,$action);
 		
+		JFactory::getApplication()->enqueueMessage($config->msg_confirm);
+		JFactory::getApplication()->redirect('index.php?ItemId=0');	
 	}
 		
 
@@ -237,14 +244,69 @@ class plgBookproPayment_banco extends BookproPaymentPlugin {
 		$input = jfactory::getApplication()->input;		
 		$status = $input->getString('banco_transactionStatus');
 		
-		$success_status = array('CO','PA');
+		if(!data['email']){
+			$customer = JbPaymentbancoLib::getCustomerByOrderID($data['id']);
+			$data['email'] = $customer->email;
+			$data['phone'] = $customer->mobile;
+		}
+		$config = $this->getConfig();
+		$tx_id = '';
+		
+		$xml = '<?xml version="1.0" encoding="UTF-8"?>
+				<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:pay="http://www.bancoeconomico.ao/xsd/paymentrefdetails">
+				   '.getHeader($config).'
+				   <soapenv:Body>
+					  <pay:PaymentRefDetailsQueryRequest>
+						  <pay:HEADER>
+							<pay:SOURCE>'.$config->source.'</pay:SOURCE>
+							<pay:MSGID>'.$this->gen_uuid().'</pay:MSGID>
+							<pay:USERID>'.$config->user_id.'</pay:USERID>
+							<pay:BRANCH>000</pay:BRANCH>
+							<!--Optional:-->
+							<pay:PASSWORD/>
+							<pay:INVOKETIMESTAMP>'.(new DateTime())->format('Y-m-d\TH:i:s').'</pay:INVOKETIMESTAMP>
+						 </pay:HEADER>
+						 <pay:BODY>
+							<pay:Payment>
+							   <pay:AUTHTOKEN>'.$config->token.'</pay:AUTHTOKEN>
+							   <pay:ENTITYID>'.$config->entity_id.'</pay:ENTITYID>
+							   <!--Optional:-->
+							   <pay:PaymentIdList>
+								  <!--Zero or more repetitions:-->
+								  <pay:PAYMENT_ID>'.$tx_id.'</pay:PAYMENT_ID>
+							   </pay:PaymentIdList>
+							   <!--Optional:-->
+							   <pay:SourcetIdList>
+								  <!--Zero or more repetitions:-->
+								  <pay:SOURCE_ID/>
+							   </pay:SourcetIdList>
+							</pay:Payment>
+						 </pay:BODY>
+					  </pay:PaymentRefDetailsQueryRequest>
+				   </soapenv:Body>
+				</soapenv:Envelope>';
+		
+		if($config->test_mode){						
+			$wsdl = BANCO_PATH.'/wsdl/WSI_PaymentRefDetailsQuery.wsdl';			
+			$wsdl_endpoint = 'https://spf-webservices-uat.bancoeconomico.ao:7443/soa-infra/services/SPF/WSI_PaymentRefDetailsQuery/WSI_PaymentRefDetailsQuery';
+			$action = 'WSI_PaymentRefDetailsQuery';
+		}else{
+			$wsdl =  'https://spf-webservices.bancoeconomico.ao:8443/soa-infra/services/SPF/WSI_PaymentRefDetailsQuery/WSI_PaymentRefDetailsQuery?WSDL';
+			$wsdl_endpoint = 'https://spf-webservices.bancoeconomico.ao:8443/soa-infra/services/SPF/WSI_PaymentRefDetailsQuery/WSI_PaymentRefDetailsQuery?WSDL';
+		}
+		
+		$action = 'WSI_PaymentRefDetailsQuery';		
+		$client = new RemoteSoapClient($wsdl);
+		$result = $client->execute($wsdl_endpoint,$xml,$action);
+		
+		$success_status = array('SUCCESS');
 		
 		if(in_array($status, $success_status)){
 			$order_number = $input->getString('_itemId');
 			$order_jb = JbPaymentbancoLib::getOrder($order_number);
 			$order_jb->pay_status = 'SUCCESS';
 			$order_jb->order_status = 'CONFIRMED';
-			$order_jb->tx_id = $tnxref;
+			$order_jb->tx_id = $tx_id;
 			$order_jb->store ();
 			return $order_jb;	
 		}else{
