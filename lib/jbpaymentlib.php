@@ -11,11 +11,12 @@ Class JbPaymentbancoLib{
 		return;
 	}
 	
-	public static function getOrder($order_number){
+	public static function getOrder($order_number,$order_id=null){
 		require_once JPATH_ADMINISTRATOR.'/components/com_bookpro/tables/orders.php';
 		$db = JFactory::getDbo();
 		$table = new TableOrders($db);
-		$table->load(array('order_number'=>$order_number));
+		if($order_id) $table->load($order_id);
+		else $table->load(array('order_number'=>$order_number));
 		if($table->id){
 			return $table;
 		}
