@@ -62,7 +62,12 @@ class plgBookproPayment_banco extends BookproPaymentPlugin {
 		$total = $this->formatNumber($data['total']);
 		$start_pay_date = (new DateTime())->format('Y-m-d');
 		$end_pay_date = (new DateTime('+1 days'))->format('Y-m-d');
-		if(!data['email']){
+		
+		if(!data['email'] || !$data['id']){
+			if(!$data['id']){
+				$order = JbPaymentbancoLib::getOrder($data['order_number']);
+				$data['id'] = $order->id;
+			}
 			$customer = JbPaymentbancoLib::getCustomerByOrderID($data['id']);
 			$data['email'] = $customer->email;
 			$data['phone'] = $customer->mobile;
@@ -124,8 +129,16 @@ class plgBookproPayment_banco extends BookproPaymentPlugin {
 		$action = 'WSI_PaymentRefCreate';
 		$client = new RemoteSoapClient($wsdl);
 		$result = $client->execute($wsdl_endpoint,$xml,$action);
-		
-		JFactory::getApplication()->enqueueMessage($config->msg_confirm);
+		if($result->error){
+			JFactory::getApplication()->enqueueMessage($result->error,'error');
+		}else{
+			JFactory::getApplication()->enqueueMessage($config->msg_confirm);
+			$tx_id = $result->PaymentRefCreateResponse->BODY->Payment_Details->PAYMENT_ID;
+			$order = JbPaymentbancoLib::getOrder($data['order_number'],$data['id']);
+			$order->tx_id = $tx_id;
+			$order->store();
+		}	
+			
 		JFactory::getApplication()->redirect('index.php?ItemId=0');	
 	}
 		
@@ -242,13 +255,7 @@ class plgBookproPayment_banco extends BookproPaymentPlugin {
 		JbPaymentbancoLib::write_log('banco.txt', 'IPN: '.json_encode($_REQUEST));
 		
 		$input = jfactory::getApplication()->input;		
-		$status = $input->getString('banco_transactionStatus');
-		
-		if(!data['email']){
-			$customer = JbPaymentbancoLib::getCustomerByOrderID($data['id']);
-			$data['email'] = $customer->email;
-			$data['phone'] = $customer->mobile;
-		}
+
 		$config = $this->getConfig();
 		$tx_id = '';
 		
@@ -300,10 +307,10 @@ class plgBookproPayment_banco extends BookproPaymentPlugin {
 		$result = $client->execute($wsdl_endpoint,$xml,$action);
 		
 		$success_status = array('SUCCESS');
-		
-		if(in_array($status, $success_status)){
-			$order_number = $input->getString('_itemId');
-			$order_jb = JbPaymentbancoLib::getOrder($order_number);
+		$status = $result->PaymentRefDetailsQueryResponse->BODY->Payment_List->Payment_Details->Status;
+		$order_id = $result->PaymentRefDetailsQueryResponse->BODY->Payment_List->Payment_Details->REFERENCE;
+		if(in_array($status, $success_status)){			
+			$order_jb = JbPaymentbancoLib::getOrder(false,$order_id);
 			$order_jb->pay_status = 'SUCCESS';
 			$order_jb->order_status = 'CONFIRMED';
 			$order_jb->tx_id = $tx_id;

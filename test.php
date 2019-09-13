@@ -86,8 +86,9 @@ $result = $client->execute($wsdl_endpoint,$xml,$action);
 //$functions = $client->__getFunctions ();
 //debug($functions);die;
 //$result = $client->__soapCall($action,$xml1);
-debug($result);
 
+debug($result->PaymentRefCreateResponse->BODY->Payment_Details->PAYMENT_ID);
+die;
 
 $xml_query = '<?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:pay="http://www.bancoeconomico.ao/xsd/paymentrefdetails">
@@ -130,9 +131,9 @@ $action = 'WSI_PaymentRefDetailsQuery';
 $client = new RemoteSoapClient($wsdl);
 //$client->__setSoapHeaders($header); 
 $result = $client->execute($wsdl_endpoint,$xml_query,$action);
-debug($result->Payment_List->Payment_Details->Status);
+debug($result->PAYMENT_ID);
 
-
+die;
 function getSoapResult($action,$xml){
 	$wsdl = BANCO_PATH.'/lib/SPFService_v1.1.wsdl';	
 	//$wsdl = 'https://spf-webservices.bancoeconomico.ao:8443/soa-infra/services/SPF/WSI_PaymentRefCreate/WSI_PaymentRefCreate?wsdl';

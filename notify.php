@@ -2,6 +2,7 @@
 define('_JEXEC',1);
 require 'jbdefines.php';
 require 'lib/jbpaymentlib.php';
+require 'lib/soapclient.php';
 require JPATH_ROOT.'/components/com_bookpro/controllers/payment.php';
 /*
 $res = file_get_contents('php://input');
